@@ -228,8 +228,8 @@ pub struct Company {
 }
 
 impl Company {
-    pub fn new<A: API>(api: A, number: &'static str) -> Result<Company>{
-        api.get_company(number)?
+    pub fn new<a: API>(api: &a, number: &'static str) -> Result<Company>{
+        api.get_company(number)
     }
 }
 
@@ -243,9 +243,9 @@ struct JsonResponse {
     primary_topic: Company
 }
 
-pub struct CH_API {}
+pub struct ChApi {}
 
-impl API for CH_API {
+impl API for ChApi {
     fn get_company(self, number: &'static str) -> Result<Company> {
         let url = format!("http://data.companieshouse.gov.uk/doc/company/{}.json", number);
         let res:JsonResponse = reqwest::get(&url)?.json()?;
@@ -253,13 +253,14 @@ impl API for CH_API {
     }
 }
 
-pub struct MOCK_API {}
+pub struct MockApi {}
 
-impl API for MOCK_API {
+impl API for MockApi {
     fn get_company(self, number: &'static str) -> Result<Company> {
+        println!("{}", number);
         let company = Company {
-            name: "Test company Ltd".to_string(),
-            number: "123456789".to_string(),
+            name: "TEST COMPANY LTD".to_string(),
+            number: "01234567".to_string(),
             reg_address: Address{
                 care_of: "".to_string(),
                 po_box: "".to_string(),
@@ -299,7 +300,7 @@ impl API for MOCK_API {
 #[cfg(test)]
 mod tests {
     use Company;
-    use MOCK_API;
+    use MockApi;
 
     #[derive(Debug)]
     struct GetCompanyTest {
@@ -310,16 +311,16 @@ mod tests {
 
     #[test]
     fn get_company() {
-        let api = MOCK_API{};
+        let api = MockApi{};
         let tests: Vec<GetCompanyTest> = vec![
             GetCompanyTest{
-                company_number: "02050399",
-                expected_name: "ZENITH PRINT (UK) LIMITED",
+                company_number: "01234567",
+                expected_name: "TEST COMPANY LTD",
                 expect_limited_partnership_empty: true
             }
         ];
         for test in tests.iter() {
-            let company = Company::new(api, test.company_number).expect("not found");
+            let company = Company::new(&api, test.company_number).expect("not found");
             assert_eq!(company.name, test.expected_name);
             assert_eq!(company.limited_partnership.is_empty(), test.expect_limited_partnership_empty);
         }
