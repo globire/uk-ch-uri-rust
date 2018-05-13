@@ -228,13 +228,13 @@ pub struct Company {
 }
 
 impl Company {
-    pub fn new<a: API>(api: &a, number: &'static str) -> Result<Company>{
+    pub fn new<A: API>(api: &A, number: &'static str) -> Result<Company>{
         api.get_company(number)
     }
 }
 
 pub trait API {
-    fn get_company(self, number: &'static str) -> Result<Company>;
+    fn get_company(&self, number: &'static str) -> Result<Company>;
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -246,7 +246,7 @@ struct JsonResponse {
 pub struct ChApi {}
 
 impl API for ChApi {
-    fn get_company(self, number: &'static str) -> Result<Company> {
+    fn get_company(&self, number: &'static str) -> Result<Company> {
         let url = format!("http://data.companieshouse.gov.uk/doc/company/{}.json", number);
         let res:JsonResponse = reqwest::get(&url)?.json()?;
         Ok(res.primary_topic)
@@ -256,7 +256,7 @@ impl API for ChApi {
 pub struct MockApi {}
 
 impl API for MockApi {
-    fn get_company(self, number: &'static str) -> Result<Company> {
+    fn get_company(&self, number: &'static str) -> Result<Company> {
         println!("{}", number);
         let company = Company {
             name: "TEST COMPANY LTD".to_string(),
