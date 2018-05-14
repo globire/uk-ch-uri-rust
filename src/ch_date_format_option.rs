@@ -10,12 +10,18 @@ const FORMAT: &'static str = "%d/%m/%Y";
 //        S: Serializer
 //
 // although it may also be generic over the input types T.
-pub fn serialize<S>(date: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+pub fn serialize<S>(o: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
-    let s = format!("{}", date.format(FORMAT));
-    serializer.serialize_str(&s)
+    match *o {
+        Some(date) => {
+            let s = format!("{}", date.format(FORMAT));
+            serializer.serialize_str(&s)
+        },
+        None => { serializer.serialize_str(&"".to_string()) }
+    }
+    
 }
 
 // The signature of a deserialize_with function must follow the pattern:
@@ -25,7 +31,7 @@ where
 //        D: Deserializer<'de>
 //
 // although it may also be generic over the output types T.
-pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error> 
 where
     D: Deserializer<'de>,
 {
@@ -34,5 +40,5 @@ where
     let y = parts[2].parse::<i32>().unwrap();
     let m = parts[1].parse::<u32>().unwrap();
     let d = parts[0].parse::<u32>().unwrap();
-    Ok(Utc.ymd(y,m,d).and_hms(0, 0, 0))
+    Ok(Some(Utc.ymd(y,m,d).and_hms(0, 0, 0)))
 }
